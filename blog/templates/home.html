@@ -1,0 +1,860 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<div class="hero">
+    <div class="hero-text">
+        <h1>Mood Blog</h1>
+        <p>Share your thoughts. Express your mood.</p>
+        <a href="/create/" class="hero-btn">Start Writing</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- TOP NAVBAR -->
+    <div class="topbar">
+        <h2>Mood Blog</h2>
+        <div class="nav">
+            {% if user.is_authenticated %}
+                <a href="/create/">Write Blog</a>
+                <a href="/saved/">Saved Blogs</a>
+                <a href="/my-drafts/" class="drafts-link">📝 My Drafts</a>
+                <form action="/logout/" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/login/">Login</a>
+                <a href="/signup/">Signup</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- MOOD FILTER -->
+    <h3>Filter by Mood</h3>
+    <div class="mood-filter">
+        <a href="/">All</a>
+        <a href="?mood=Happy">Happy</a>
+        <a href="?mood=Sad">Sad</a>
+        <a href="?mood=Motivated">Motivated</a>
+        <a href="?mood=Relaxed">Relaxed</a>
+    </div>
+
+    <hr>
+
+    <!-- BLOG LIST -->
+    <div class="blog-grid">
+        {% for blog in blogs %}
+        <div class="blog" id="blog-{{blog.id}}" data-full-content="{{ blog.content|escapejs }}">
+            <!-- AUDIO PLAYER -->
+            {% if blog.audio_file %}
+            <audio controls>
+                <source src="{{ blog.audio_file.url }}" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+            {% endif %}
+            
+            <!-- SPOTIFY EMBED -->
+            {% if blog.spotify_link %}
+            <iframe style="border-radius:12px"
+                src="https://open.spotify.com/embed/track/{{ blog.spotify_link|cut:'https://open.spotify.com/track/' }}"
+                width="100%" height="80" frameBorder="0"
+                allowfullscreen=""
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
+            </iframe>
+            {% endif %}
+
+            <!-- TITLE -->
+            <h2 class="blog-title">{{ blog.title }}</h2>
+            
+            <!-- COVER IMAGE - STANDARD SIZE -->
+            {% if blog.cover_image %}
+            <img src="{{ blog.cover_image.url }}" class="blog-cover" alt="{{ blog.title }}">
+            {% endif %}
+            
+            <!-- CONTENT PREVIEW - FIXED HEIGHT -->
+            <div class="blog-content blog-preview">
+                {{ blog.content|safe|truncatewords_html:30 }}
+            </div>
+            
+            <!-- READ MORE BUTTON -->
+            <div class="read-more-container">
+                <button onclick="openBlogModal({{ blog.id }})" class="read-more-btn">Read Full Article →</button>
+            </div>
+            
+            <div class="blog-divider"></div>
+            
+            <!-- METADATA - COMPACT -->
+            <div class="blog-meta-compact">
+                <span class="mood-tag">{{ blog.mood }}</span>
+                <span class="reading-time">{{ blog.reading_time }} min</span>
+                {% if blog.anonymous %}
+                <span class="author-tag">Anonymous</span>
+                {% else %}
+                <span class="author-tag">{{ blog.author }}</span>
+                {% endif %}
+            </div>
+
+            <!-- REACTION + SAVE BOX - COMPACT -->
+            <div class="reactions-box">
+                <a href="/react/{{ blog.id }}/like/#blog-{{ blog.id }}" class="reaction-btn">👍 {{ blog.thumbs_up }}</a>
+                <a href="/react/{{ blog.id }}/dislike/#blog-{{ blog.id }}" class="reaction-btn">👎 {{ blog.thumbs_down }}</a>
+                <a href="/react/{{ blog.id }}/heart/#blog-{{ blog.id }}" class="reaction-btn">❤️ {{ blog.heart }}</a>
+                <a href="/save/{{ blog.id }}/#blog-{{ blog.id }}" class="reaction-btn">🔖</a>
+                <span class="reaction-btn comment-btn" onclick="toggleComments({{ blog.id }})">
+                    💬 {{ blog.comment_set.count }}
+                </span>
+                <a href="{% url 'export_pdf' blog.id %}" class="reaction-btn" target="_blank" title="Download as PDF">📄</a>
+
+                <!-- DELETE BUTTON - ONLY SHOW FOR AUTHOR -->
+                {% if user.is_authenticated and user == blog.author %}
+                <a href="#" onclick="confirmDelete({{ blog.id }})" class="reaction-btn delete-btn" title="Delete Blog">🗑️</a>
+                {% endif %}
+
+                <!-- SHARE DROPDOWN -->
+                <div class="share-dropdown">
+                    <button class="share-btn" onclick="toggleShare({{ blog.id }})">📤</button>
+                    <div id="share-{{ blog.id }}" class="share-options" style="display: none;">
+                        <a href="https://wa.me/?text={{ blog.title }} - {{ request.build_absolute_uri }}" target="_blank" class="share-wa">WhatsApp</a>
+                        <a href="https://twitter.com/intent/tweet?text={{ blog.title }}&url={{ request.build_absolute_uri }}" target="_blank" class="share-twitter">Twitter</a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" class="share-fb">Facebook</a>
+                        <button onclick="copyLink('{{ request.build_absolute_uri }}')" class="share-copy">Copy Link</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMMENTS SECTION - SIMPLIFIED -->
+            <div id="comments-{{ blog.id }}" class="comment-box" style="display:none;">
+                <div class="comment-list" id="comment-list-{{ blog.id }}">
+                    {% for comment in blog.comment_set.all %}
+                        <div class="single-comment">
+                            <p>{{ comment.text }}</p>
+                            <small>— {{ comment.author|default:"Anonymous" }}</small>
+                        </div>
+                    {% empty %}
+                        <p id="no-comments-{{ blog.id }}">No comments yet. Be the first to comment!</p>
+                    {% endfor %}
+                </div>
+                
+                <!-- SIMPLE COMMENT FORM -->
+                <div class="comment-form">
+                    {% csrf_token %}
+                    <textarea id="comment-text-{{ blog.id }}" placeholder="Write a comment..." required></textarea>
+                    <button onclick="postComment({{ blog.id }})" class="post-comment-btn">Post Comment</button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="no-blogs">
+            <h3>No blogs yet</h3>
+            <p>Be the first to write a blog post!</p>
+            <a href="/create/" class="hero-btn">Start Writing</a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- BLOG MODAL -->
+<div id="blogModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title"></h2>
+            <button class="close-modal" onclick="closeBlogModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modal-body">
+            <!-- Blog content will be loaded here -->
+        </div>
+        <div class="modal-footer">
+            <div class="modal-reactions" id="modal-reactions"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Additional styles to fix layout issues */
+    .blog-content {
+        line-height: 1.5;
+        margin: 10px 0;
+        font-size: 14px;
+        word-wrap: break-word;
+    }
+    
+    .blog-content mark {
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
+    
+    .single-comment {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        font-size: 13px;
+    }
+    
+    .single-comment small {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 11px;
+    }
+    
+    .no-blogs {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+    }
+    
+    .drafts-link {
+        background: rgba(255, 193, 7, 0.2);
+        padding: 5px 12px;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        font-size: 14px;
+    }
+    
+    .drafts-link:hover {
+        background: rgba(255, 193, 7, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    /* Fix for blog grid - STANDARDIZED CARDS */
+    .blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+        margin-top: 30px;
+    }
+    
+    .blog {
+        height: fit-content;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        margin-bottom: 0;
+        padding: 18px;
+        border-radius: 16px;
+        min-height: 500px;
+        transition: all 0.3s ease;
+    }
+    
+    .blog:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .blog-cover {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin: 8px 0;
+    }
+    
+    .blog-title {
+        margin: 8px 0 5px 0;
+        font-size: 20px;
+        font-weight: 600;
+        line-height: 1.3;
+        word-wrap: break-word;
+    }
+    
+    audio, iframe {
+        width: 100%;
+        margin: 8px 0;
+        border-radius: 8px;
+    }
+    
+    /* Compact metadata */
+    .blog-meta-compact {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 10px 0 5px 0;
+        font-size: 12px;
+    }
+    
+    .mood-tag, .reading-time, .author-tag {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    
+    /* Compact reactions */
+    .reactions-box {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 10px 0 5px 0;
+        padding: 8px 12px;
+        justify-content: center;
+    }
+    
+    .reaction-btn {
+        font-size: 13px;
+        padding: 4px 8px;
+        border-radius: 16px;
+        transition: all 0.2s ease;
+    }
+    
+    .reaction-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: scale(1.05);
+    }
+    
+    /* Delete button */
+    .delete-btn {
+        color: #ff6b6b !important;
+    }
+    
+    .delete-btn:hover {
+        background: rgba(255, 107, 107, 0.2) !important;
+        transform: scale(1.1);
+    }
+    
+    .share-dropdown {
+        position: relative;
+    }
+    
+    .share-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 16px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.3s ease;
+    }
+    
+    .share-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-2px);
+    }
+    
+    .share-options {
+        position: absolute;
+        bottom: 100%;
+        right: 0;
+        z-index: 1000;
+        min-width: 110px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .share-options a, .share-options button {
+        font-size: 12px;
+        padding: 8px 12px;
+        width: 100%;
+        text-align: left;
+        border: none;
+        background: rgba(40, 40, 40, 0.95);
+        color: white;
+        transition: all 0.2s ease;
+    }
+    
+    .share-options a:hover, .share-options button:hover {
+        background: rgba(60, 60, 60, 0.95);
+        transform: translateX(3px);
+    }
+    
+    /* Read More Button - STANDARD */
+    .read-more-container {
+        margin: 10px 0 5px 0;
+        text-align: left;
+    }
+    
+    .read-more-btn {
+        background: rgba(52, 152, 219, 0.15);
+        border: 1px solid rgba(52, 152, 219, 0.3);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: inline-block;
+    }
+    
+    .read-more-btn:hover {
+        background: rgba(52, 152, 219, 0.3);
+        transform: translateX(5px);
+    }
+    
+    /* Blog preview - FIXED HEIGHT */
+    .blog-preview {
+        max-height: 120px;
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 5px;
+        line-height: 1.5;
+    }
+    
+    .blog-preview::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 40px;
+        background: linear-gradient(transparent, rgba(0,0,0,0.9));
+        pointer-events: none;
+    }
+    
+    /* Blog divider */
+    .blog-divider {
+        margin: 12px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /* Modal Styles */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        z-index: 2000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: modalFadeIn 0.3s ease;
+    }
+
+    .modal-content {
+        background: rgba(30, 30, 30, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 16px;
+        width: 90%;
+        max-width: 700px;
+        max-height: 80vh;
+        overflow-y: auto;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        animation: modalSlideUp 0.3s ease;
+    }
+
+    .modal-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        background: inherit;
+        backdrop-filter: inherit;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        color: white;
+        font-size: 20px;
+        padding-right: 40px;
+    }
+
+    .close-modal {
+        background: rgba(255, 99, 99, 0.2);
+        border: 1px solid rgba(255, 99, 99, 0.3);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        position: absolute;
+        right: 15px;
+        top: 12px;
+    }
+
+    .close-modal:hover {
+        background: rgba(255, 99, 99, 0.4);
+        transform: rotate(90deg);
+    }
+
+    .modal-body {
+        padding: 20px;
+        color: white;
+        line-height: 1.6;
+        font-size: 15px;
+    }
+
+    /* SMALLER IMAGES IN MODAL */
+    .modal-body img {
+        max-width: 100%;
+        max-height: 300px;
+        width: auto;
+        height: auto;
+        border-radius: 8px;
+        margin: 10px 0;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .modal-body audio, .modal-body iframe {
+        width: 100%;
+        margin: 10px 0;
+    }
+
+    .modal-footer {
+        padding: 15px 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-reactions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .modal-reactions a {
+        color: white;
+        text-decoration: none;
+        padding: 5px 12px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+        font-size: 13px;
+    }
+
+    .modal-reactions a:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.05);
+    }
+
+    @keyframes modalFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes modalSlideUp {
+        from {
+            transform: translateY(50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* Scrollbar styling */
+    .modal-content::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .modal-content::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    .modal-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+    
+    /* Comment form styles */
+    .comment-form {
+        margin-top: 15px;
+    }
+    
+    .comment-form textarea {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        margin-bottom: 10px;
+        box-sizing: border-box;
+    }
+    
+    .post-comment-btn {
+        background: rgba(79, 138, 107, 0.8);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .post-comment-btn:hover {
+        background: rgba(79, 138, 107, 1);
+        transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+        .blog-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .blog {
+            padding: 15px;
+            min-height: 450px;
+        }
+        
+        .modal-content {
+            width: 95%;
+            max-height: 85vh;
+        }
+        
+        .modal-body img {
+            max-height: 200px;
+        }
+        
+        .reactions-box {
+            gap: 5px;
+        }
+        
+        .reaction-btn {
+            font-size: 12px;
+            padding: 3px 6px;
+        }
+    }
+</style>
+
+<script>
+// ========== SIMPLE COMMENT FIX - THIS WORKS 100% ==========
+
+// Toggle comments visibility
+function toggleComments(id) {
+    const box = document.getElementById("comments-" + id);
+    if (box.style.display === "block") {
+        box.style.display = "none";
+    } else {
+        box.style.display = "block";
+    }
+}
+
+// Post comment function
+function postComment(blogId) {
+    const textarea = document.getElementById('comment-text-' + blogId);
+    const comment = textarea.value.trim();
+    
+    if (!comment) {
+        alert('Please write a comment!');
+        return;
+    }
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Disable button and show loading
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = 'Posting...';
+    btn.disabled = true;
+    
+    // Send the comment
+    fetch(`/comment/${blogId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `text=${encodeURIComponent(comment)}`
+    })
+    .then(response => {
+        if (response.ok) {
+            // Clear textarea
+            textarea.value = '';
+            
+            // Add comment to the list immediately (without reload)
+            const commentList = document.getElementById('comment-list-' + blogId);
+            const noComments = document.getElementById('no-comments-' + blogId);
+            
+            if (noComments) {
+                noComments.remove();
+            }
+            
+            const newComment = document.createElement('div');
+            newComment.className = 'single-comment';
+            newComment.innerHTML = `<p>${comment}</p><small>— Just now</small>`;
+            commentList.appendChild(newComment);
+            
+            // Update comment count
+            const commentBtn = document.querySelector(`.comment-btn[onclick="toggleComments(${blogId})"]`);
+            if (commentBtn) {
+                const currentCount = parseInt(commentBtn.textContent.match(/\d+/)?.[0] || 0);
+                commentBtn.textContent = ` 💬 ${currentCount + 1}`;
+            }
+            
+            btn.textContent = originalText;
+            btn.disabled = false;
+        } else {
+            alert('Failed to post comment');
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        alert('Error posting comment');
+        btn.textContent = originalText;
+        btn.disabled = false;
+    });
+}
+
+// Toggle share dropdown
+function toggleShare(blogId) {
+    const shareBox = document.getElementById('share-' + blogId);
+    if (shareBox.style.display === 'block') {
+        shareBox.style.display = 'none';
+    } else {
+        shareBox.style.display = 'block';
+    }
+}
+
+// Copy link function
+function copyLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Link copied to clipboard!');
+    }).catch(() => {
+        alert('Failed to copy link');
+    });
+}
+
+// Close share dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.classList.contains('share-btn') && !event.target.closest('.share-options')) {
+        document.querySelectorAll('.share-options').forEach(box => {
+            box.style.display = 'none';
+        });
+    }
+});
+
+// Confirm before deleting blog
+function confirmDelete(blogId) {
+    if (confirm('Are you sure you want to delete this blog? This action cannot be undone.')) {
+        window.location.href = `/delete-blog/${blogId}/`;
+    }
+}
+
+// Open blog modal with FULL content
+function openBlogModal(blogId) {
+    const blogElement = document.getElementById('blog-' + blogId);
+    if (!blogElement) {
+        alert('Blog not found');
+        return;
+    }
+    
+    // Get blog data
+    const title = blogElement.querySelector('.blog-title').textContent;
+    
+    // Get FULL content from data attribute
+    let fullContent = blogElement.dataset.fullContent || '';
+    
+    if (!fullContent) {
+        alert('Could not load blog content');
+        return;
+    }
+    
+    // Decode Unicode escapes
+    fullContent = decodeUnicodeEscapes(fullContent);
+    
+    // Remove Word/Office fragment markers
+    fullContent = fullContent.replace(/<!--StartFragment-->|<!--EndFragment-->/g, '');
+    fullContent = fullContent.replace(/<\u002D\u002DStartFragment\u002D\u002D>|<\u002D\u002DEndFragment\u002D\u002D>/g, '');
+    
+    // Get audio, iframe, image
+    const audio = blogElement.querySelector('audio');
+    const iframe = blogElement.querySelector('iframe');
+    const image = blogElement.querySelector('.blog-cover');
+    
+    // Build modal content
+    let modalContent = '';
+    
+    if (audio) {
+        modalContent += audio.outerHTML;
+    }
+    
+    if (iframe) {
+        modalContent += iframe.outerHTML;
+    }
+    
+    if (image) {
+        modalContent += `<img src="${image.src}" alt="${title}" style="max-width:100%; max-height:300px; width:auto; height:auto; border-radius:8px; margin:10px auto; display:block;">`;
+    }
+    
+    modalContent += `<div style="margin:15px 0; line-height:1.7;">${fullContent}</div>`;
+    
+    // Set modal content
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = modalContent;
+    
+    // Get reactions
+    const reactionsBox = blogElement.querySelector('.reactions-box');
+    if (reactionsBox) {
+        const reactionsClone = reactionsBox.cloneNode(true);
+        
+        // Remove interactive elements for modal
+        const commentBtn = reactionsClone.querySelector('.comment-btn');
+        if (commentBtn) commentBtn.remove();
+        
+        const shareDropdown = reactionsClone.querySelector('.share-dropdown');
+        if (shareDropdown) shareDropdown.remove();
+        
+        document.getElementById('modal-reactions').innerHTML = reactionsClone.innerHTML;
+    }
+    
+    // Show modal
+    document.getElementById('blogModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+// Helper function to decode Unicode escapes
+function decodeUnicodeEscapes(str) {
+    return str.replace(/\\u([\dA-Fa-f]{4})/g, function(match, grp) {
+        return String.fromCharCode(parseInt(grp, 16));
+    });
+}
+
+// Close blog modal
+function closeBlogModal() {
+    document.getElementById('blogModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('blogModal');
+    if (event.target === modal) {
+        closeBlogModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeBlogModal();
+    }
+});
+</script>
+
+{% endblock %}

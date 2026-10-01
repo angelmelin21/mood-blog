@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Login</title>
+<link rel="stylesheet" href="/static/main.css">
+</head>
+
+<body>
+
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="topbar">
+        <h2>Login</h2>
+        <div class="nav">
+            <a href="/">⬅ Back to Home</a>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="glass-card" style="background: rgba(255, 0, 0, 0.2); padding: 10px; margin-bottom: 20px;">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+
+    <br>
+    <div class="glass-card" style="text-align: center; padding: 15px;">
+        <p style="margin: 0;">Don't have an account? <a href="/signup/" style="color: white; font-weight: bold; text-decoration: underline;">Sign up here</a></p>
+    </div>
+</div>
+{% endblock %}</body>
+</html>

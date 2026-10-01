@@ -1,0 +1,583 @@
+{% extends "base.html" %}
+
+{% block title %}Create Blog{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="topbar">
+        <h2>Write a Blog</h2>
+        <div class="nav">
+            <a href="/">⬅ Back to Home</a>
+            <a href="/my-drafts/" class="drafts-link">📝 My Drafts</a>
+        </div>
+    </div>
+
+    <h1>Write a Blog</h1>
+
+    <div class="auto-save-status" id="autoSaveStatus"></div>
+
+    <form method="POST" enctype="multipart/form-data" id="blogForm">
+        {% csrf_token %}
+        
+        <!-- Hidden draft ID field -->
+        <input type="hidden" name="draft_id" id="draftId" value="{{ draft.id|default:'' }}">
+        
+        <label>Cover Image:</label>
+        <input type="file" name="cover_image" {% if not draft %}required{% endif %} id="coverImage">
+        
+        <input type="text" name="title" placeholder="Title" required value="{{ draft.title|default:'' }}" id="title">
+        
+        <label>Upload MP3 (optional)</label>
+        <input type="file" name="audio_file" accept=".mp3" id="audioFile">
+
+        <br><br>
+
+        <label>Spotify Song Link (optional)</label>
+        <input type="url" name="spotify_link" placeholder="Paste Spotify link" value="{{ draft.spotify_link|default:'' }}" id="spotifyLink">
+        
+        <br><br>
+
+        <!-- Rich Text Editor Toolbar -->
+        <div class="editor-toolbar">
+            <button type="button" onclick="formatText('bold')" title="Bold (Ctrl+B)"><b>B</b></button>
+            <button type="button" onclick="formatText('italic')" title="Italic (Ctrl+I)"><i>I</i></button>
+            <button type="button" onclick="formatText('underline')" title="Underline (Ctrl+U)"><u>U</u></button>
+            
+            <!-- Font Family Dropdown -->
+            <select onchange="formatText('font', this.value)" class="font-select">
+                <option value="">Font</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="'Courier New', monospace">Courier New</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="Verdana, sans-serif">Verdana</option>
+                <option value="'Comic Sans MS', cursive">Comic Sans</option>
+                <option value="Impact, sans-serif">Impact</option>
+                <option value="Tahoma, sans-serif">Tahoma</option>
+            </select>
+
+            <!-- Font Size Dropdown -->
+            <select onchange="formatText('size', this.value)" class="size-select">
+                <option value="">Size</option>
+                <option value="12px">Small</option>
+                <option value="16px">Normal</option>
+                <option value="20px">Large</option>
+                <option value="24px">Huge</option>
+            </select>
+
+            <!-- Theme-based Highlight Colors -->
+            <button type="button" onclick="formatText('highlight', '#84A98C')" class="highlight-btn" style="background-color: #84A98C; color: #1a1a1a;" title="Sage Green">H</button>
+            <button type="button" onclick="formatText('highlight', '#E29578')" class="highlight-btn" style="background-color: #E29578; color: #1a1a1a;" title="Terracotta">H</button>
+            <button type="button" onclick="formatText('highlight', '#9F7EAB')" class="highlight-btn" style="background-color: #9F7EAB; color: white;" title="Dusty Purple">H</button>
+            <button type="button" onclick="formatText('highlight', '#D4A5A5')" class="highlight-btn" style="background-color: #D4A5A5; color: #1a1a1a;" title="Dusty Rose">H</button>
+            <button type="button" onclick="removeHighlight()" class="remove-highlight" title="Remove Highlight">✖</button>
+        </div>
+
+        <!-- Rich Text Editor -->
+        <div id="editor" class="rich-editor" contenteditable="true" placeholder="Write your blog here...">{{ draft.content|safe }}</div>
+        
+        <!-- Hidden textarea to store formatted content -->
+        <textarea name="content" id="content" style="display:none;">{{ draft.content|safe }}</textarea>
+
+        <br><br>
+
+        <select name="mood" id="mood">
+            <option value="Happy" {% if draft.mood == 'Happy' %}selected{% endif %}>Happy</option>
+            <option value="Sad" {% if draft.mood == 'Sad' %}selected{% endif %}>Sad</option>
+            <option value="Motivated" {% if draft.mood == 'Motivated' %}selected{% endif %}>Motivated</option>
+            <option value="Relaxed" {% if draft.mood == 'Relaxed' %}selected{% endif %}>Relaxed</option>
+            <option value="Confused" {% if draft.mood == 'Confused' %}selected{% endif %}>Confused</option>
+        </select>
+
+        <br><br>
+
+        <label class="anon">
+            <input type="checkbox" name="anonymous" id="anonymous" {% if draft.anonymous %}checked{% endif %}>
+            <span>Post anonymously</span>
+        </label>
+
+        <br><br>
+
+        <button type="submit" name="action" value="publish" id="publishBtn">📤 Publish</button>
+        <button type="button" onclick="saveDraft()" class="draft-btn">💾 Save Draft</button>
+        <span id="lastSaved" class="last-saved"></span>
+    </form>
+</div>
+
+<style>
+    /* Editor Toolbar Styles */
+    .editor-toolbar {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        align-items: center;
+    }
+
+    .editor-toolbar button {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        min-width: 40px;
+        height: 40px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.3s ease;
+    }
+
+    .editor-toolbar button:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .editor-toolbar select {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 8px;
+        border-radius: 5px;
+        cursor: pointer;
+        min-width: 80px;
+        height: 40px;
+    }
+
+    .editor-toolbar select option {
+        background: #1a1a1a;
+        color: white;
+    }
+
+    .highlight-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 5px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 18px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .highlight-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .remove-highlight {
+        background: rgba(255, 99, 99, 0.3) !important;
+        border-color: rgba(255, 99, 99, 0.5) !important;
+    }
+
+    .remove-highlight:hover {
+        background: rgba(255, 99, 99, 0.5) !important;
+    }
+
+    /* Rich Editor Styles */
+    .rich-editor {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 15px;
+        min-height: 300px;
+        max-height: 500px;
+        overflow-y: auto;
+        color: white;
+        font-size: 16px;
+        line-height: 1.6;
+        resize: vertical;
+    }
+
+    .rich-editor:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .rich-editor[placeholder]:empty:before {
+        content: attr(placeholder);
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .rich-editor[placeholder]:empty:focus:before {
+        content: "";
+    }
+
+    /* Better paragraph styling in editor */
+    .rich-editor p {
+        margin: 0 0 10px 0;
+        line-height: 1.6;
+    }
+
+    .rich-editor br {
+        display: block;
+        content: "";
+        margin: 5px 0;
+    }
+
+    /* Highlight styles */
+    .rich-editor mark {
+        padding: 2px 0;
+        border-radius: 3px;
+    }
+
+    .rich-editor mark[data-color="#84A98C"] {
+        background-color: #84A98C;
+        color: #1a1a1a;
+    }
+
+    .rich-editor mark[data-color="#E29578"] {
+        background-color: #E29578;
+        color: #1a1a1a;
+    }
+
+    .rich-editor mark[data-color="#9F7EAB"] {
+        background-color: #9F7EAB;
+        color: white;
+    }
+
+    .rich-editor mark[data-color="#D4A5A5"] {
+        background-color: #D4A5A5;
+        color: #1a1a1a;
+    }
+
+    /* Draft button styles */
+    .draft-btn {
+        background: rgba(255, 193, 7, 0.3) !important;
+        border-color: rgba(255, 193, 7, 0.5) !important;
+        margin-left: 10px;
+    }
+
+    .draft-btn:hover {
+        background: rgba(255, 193, 7, 0.5) !important;
+    }
+
+    .drafts-link {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .drafts-link:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .auto-save-status {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-size: 14px;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .auto-save-status.show {
+        opacity: 1;
+    }
+
+    .last-saved {
+        margin-left: 15px;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7);
+    }
+</style>
+
+<script>
+    // Format text function
+    function formatText(command, value = null) {
+        const selection = window.getSelection();
+        const editor = document.getElementById('editor');
+        
+        if (!selection.rangeCount) return;
+        
+        const range = selection.getRangeAt(0);
+        
+        if (range.collapsed) {
+            alert('Please select some text first!');
+            return;
+        }
+        
+        switch(command) {
+            case 'bold':
+                applyStyle('b');
+                break;
+            case 'italic':
+                applyStyle('i');
+                break;
+            case 'underline':
+                applyStyle('u');
+                break;
+            case 'font':
+                applyStyle('span', {'style': `font-family: ${value};`});
+                break;
+            case 'size':
+                applyStyle('span', {'style': `font-size: ${value};`});
+                break;
+            case 'highlight':
+                applyStyle('mark', {'data-color': value, 'style': `background-color: ${value}; color: ${getTextColor(value)};`});
+                break;
+        }
+        
+        selection.removeAllRanges();
+    }
+    
+    function removeHighlight() {
+        const selection = window.getSelection();
+        
+        if (!selection.rangeCount) return;
+        
+        const range = selection.getRangeAt(0);
+        
+        if (range.collapsed) {
+            alert('Please select some highlighted text first!');
+            return;
+        }
+        
+        const selectedContent = range.extractContents();
+        
+        const marks = selectedContent.querySelectorAll('mark');
+        marks.forEach(mark => {
+            const parent = mark.parentNode;
+            while (mark.firstChild) {
+                parent.insertBefore(mark.firstChild, mark);
+            }
+            parent.removeChild(mark);
+        });
+        
+        range.insertNode(selectedContent);
+        cleanupEmptyTags();
+        selection.removeAllRanges();
+    }
+    
+    function getTextColor(backgroundColor) {
+        const darkColors = ['#9F7EAB'];
+        return darkColors.includes(backgroundColor) ? 'white' : '#1a1a1a';
+    }
+    
+    function applyStyle(tagName, attributes = {}) {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        
+        const range = selection.getRangeAt(0);
+        const selectedContent = range.extractContents();
+        
+        const element = document.createElement(tagName);
+        
+        for (let [key, value] of Object.entries(attributes)) {
+            element.setAttribute(key, value);
+        }
+        
+        element.appendChild(selectedContent);
+        range.insertNode(element);
+        cleanupEmptyTags();
+    }
+    
+    function cleanupEmptyTags() {
+        const editor = document.getElementById('editor');
+        const emptyTags = editor.querySelectorAll('b:empty, i:empty, u:empty, mark:empty, span:empty');
+        emptyTags.forEach(tag => tag.remove());
+    }
+
+    // Clean pasted content from Word/Office
+    function cleanPastedContent(html) {
+        // Remove Word/Office specific classes and styles
+        html = html.replace(/class="[^"]*"/g, '');
+        html = html.replace(/style="[^"]*"/g, '');
+        html = html.replace(/<o:p>|<\/o:p>/g, '');
+        html = html.replace(/<\\?o:p[^>]*>/g, '');
+        html = html.replace(/<!--\[if gte mso 9\]>.*?<!\[endif\]-->/gis, '');
+        html = html.replace(/<meta[^>]*>/g, '');
+        html = html.replace(/<xml[^>]*>.*?<\/xml>/gis, '');
+        html = html.replace(/<font[^>]*>|<\/font>/g, '');
+        html = html.replace(/<p[^>]*>/g, '<p>');
+        html = html.replace(/<span[^>]*>/g, '<span>');
+        html = html.replace(/<p>\s*<\/p>/g, '');
+        return html;
+    }
+
+    // Clean content before saving to prevent Unicode escapes
+    function cleanContentForSaving(html) {
+        // Remove Word/Office fragment markers
+        html = html.replace(/<!--StartFragment-->|<!--EndFragment-->/g, '');
+        html = html.replace(/&lt;!--StartFragment--&gt;|&lt;!--EndFragment--&gt;/g, '');
+        
+        // Remove any zero-width spaces and other weird characters
+        html = html.replace(/[\u200B-\u200D\uFEFF]/g, '');
+        
+        return html;
+    }
+
+    // Auto-save functionality
+    let autoSaveTimer;
+    let draftId = document.getElementById('draftId').value || null;
+    const editor = document.getElementById('editor');
+    const titleInput = document.getElementById('title');
+    const moodSelect = document.getElementById('mood');
+    const anonymousCheck = document.getElementById('anonymous');
+    const spotifyLink = document.getElementById('spotifyLink');
+    const lastSavedSpan = document.getElementById('lastSaved');
+    const autoSaveStatus = document.getElementById('autoSaveStatus');
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (draftId) {
+            showStatus('Draft loaded', 'success');
+        }
+        
+        setInterval(autoSave, 30000);
+        
+        window.addEventListener('beforeunload', function() {
+            if (hasChanges()) {
+                autoSave();
+            }
+        });
+
+        let debounceTimer;
+        editor.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(autoSave, 2000);
+        });
+        
+        titleInput.addEventListener('input', debounceAutoSave);
+        moodSelect.addEventListener('change', autoSave);
+        anonymousCheck.addEventListener('change', autoSave);
+        spotifyLink.addEventListener('input', debounceAutoSave);
+
+        // Add paste event listener to clean Word formatting
+        editor.addEventListener('paste', function(e) {
+            e.preventDefault();
+            
+            let pastedContent = '';
+            if (e.clipboardData && e.clipboardData.getData) {
+                // Try to get HTML first
+                pastedContent = e.clipboardData.getData('text/html');
+                if (pastedContent) {
+                    // Clean the HTML
+                    pastedContent = cleanPastedContent(pastedContent);
+                } else {
+                    // Fallback to plain text
+                    pastedContent = e.clipboardData.getData('text/plain');
+                    // Convert line breaks to paragraphs
+                    pastedContent = pastedContent.split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+                }
+            }
+            
+            // Insert cleaned content
+            document.execCommand('insertHTML', false, pastedContent);
+        });
+    });
+
+    function debounceAutoSave() {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(autoSave, 2000);
+    }
+
+    function hasChanges() {
+        return titleInput.value.trim() !== '' || editor.innerHTML.trim() !== '';
+    }
+
+    function autoSave() {
+        if (!hasChanges()) return;
+
+        const formData = new FormData();
+        formData.append('title', titleInput.value);
+        let content = editor.innerHTML;
+        content = cleanContentForSaving(content);
+        formData.append('content', content);
+        formData.append('mood', moodSelect.value);
+        formData.append('anonymous', anonymousCheck.checked);
+        formData.append('spotify_link', spotifyLink.value);
+        if (draftId) {
+            formData.append('draft_id', draftId);
+        }
+
+        showStatus('Saving...', '');
+
+        fetch('/save-draft/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                draftId = data.draft_id;
+                document.getElementById('draftId').value = data.draft_id;
+                showStatus(`Saved at ${data.saved_at}`, 'success');
+                lastSavedSpan.textContent = `Last saved: ${data.saved_at}`;
+            } else {
+                showStatus('Save failed', 'error');
+            }
+        })
+        .catch(() => {
+            showStatus('Save failed', 'error');
+        });
+    }
+
+    function saveDraft() {
+        autoSave();
+    }
+
+    function showStatus(message, type) {
+        autoSaveStatus.textContent = message;
+        autoSaveStatus.className = 'auto-save-status show ' + type;
+        
+        setTimeout(() => {
+            autoSaveStatus.classList.remove('show');
+        }, 3000);
+    }
+
+    function prepareContent() {
+        let content = editor.innerHTML;
+        content = cleanContentForSaving(content);
+        document.getElementById('content').value = content;
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Form submission handler with content cleaning
+    document.getElementById('blogForm').addEventListener('submit', function(e) {
+        // Prepare and clean content before submission
+        prepareContent();
+        
+        // Let the form submit normally
+        return true;
+    });
+</script>
+{% endblock %}

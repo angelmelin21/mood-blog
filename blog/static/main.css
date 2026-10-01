@@ -1,0 +1,774 @@
+/* ================= GLOBAL ================= */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #0f1720, #141c26, #1a2430);
+    background-attachment: fixed;
+    color: #e6edf3;
+    padding-top: 80px; /* Space for fixed mood bar */
+    transition: background 0.5s ease;
+}
+
+/* Mood Color Schemes */
+body.mood-prussian {
+    background: linear-gradient(135deg, #003153, #1a4c7a, #2a5c8a);
+}
+
+body.mood-pantone {
+    background: linear-gradient(135deg, #D6254D, #ff6b9d, #ff8eb5);
+}
+
+body.mood-lavender {
+    background: linear-gradient(135deg, #B57EDC, #d8b4ff, #e6ccff);
+}
+
+body.mood-burgundy {
+    background: linear-gradient(135deg, #800020, #b3003c, #e6004c);
+}
+
+/* Mood Bar Styles */
+.mood-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 15px;
+    background: rgba(27, 36, 48, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+}
+
+.mood-btn {
+    padding: 10px 25px;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.mood-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.mood-btn:active {
+    transform: translateY(0);
+}
+
+/* ================= CONTAINER ================= */
+
+.container {
+    width: 92%;
+    max-width: 1400px;
+    margin: auto;
+    padding: 30px;
+    margin-top: 30px;
+    border-radius: 18px;
+    background: rgba(27, 36, 48, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ================= TOP BAR ================= */
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    background: rgba(27, 36, 48, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    min-height: 70px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    flex-wrap: wrap;
+    padding: 8px 18px;
+    border-radius: 10px;
+    background: rgba(20, 28, 38, 0.6);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.nav a, .nav button {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    padding: 8px 12px;
+    line-height: 1.4;
+    border-radius: 6px;
+}
+
+.nav form {
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.nav a {
+    text-decoration: none;
+    font-weight: 600;
+    color: #7bbf9c;
+}
+
+.nav button {
+    background: none;
+    border: none;
+    color: #7bbf9c;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+}
+
+.nav a:hover,
+.nav button:hover {
+    color: #4f8a6b;
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+/* ================= HEADINGS ================= */
+
+h1, h2 {
+    color: #e6edf3;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.topbar h2 {
+    margin: 0;
+    padding: 5px 0;
+    line-height: 1.4;
+    font-size: 1.5rem;
+}
+
+/* ================= HERO ================= */
+
+.hero {
+    height: 420px;
+    background: url("https://plus.unsplash.com/premium_photo-1684581214880-2043e5bc8b8b?w=600&auto=format&fit=crop&q=60");
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+    animation: zoom 20s infinite alternate;
+    border-radius: 14px;
+    position: relative;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    border-radius: 14px;
+}
+
+.hero-text {
+    max-width: 600px;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes zoom {
+    from { background-size: 100%; }
+    to { background-size: 110%; }
+}
+
+.hero-text h1 {
+    font-size: 60px;
+    margin-bottom: 10px;
+}
+
+.hero-text p {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #d1d8df;
+}
+
+.hero-btn {
+    background: rgba(79, 138, 107, 0.8);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    padding: 12px 25px;
+    border-radius: 25px;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    transition: 0.25s;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-btn:hover {
+    background: rgba(61, 111, 85, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* ================= BLOG GRID - FIXED ================= */
+
+.blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+/* ================= BLOG CARD - STANDARDIZED ================= */
+
+.blog {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 20px;
+    border-radius: 16px;
+    background: rgba(20, 28, 38, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+    transition: all 0.3s ease;
+    height: 100%;
+    min-height: 500px;
+    box-sizing: border-box;
+}
+
+.blog:hover {
+    transform: translateY(-5px);
+    border-color: rgba(79, 138, 107, 0.5);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.55);
+    background: rgba(20, 28, 38, 0.7);
+}
+
+.blog-divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    margin: 15px 0;
+    width: 100%;
+}
+
+/* ================= BLOG IMAGE ================= */
+
+.blog-cover {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin: 5px 0 10px 0;
+}
+
+/* ================= BLOG TEXT ================= */
+
+.blog-title {
+    margin: 5px 0 10px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #e6edf3;
+    line-height: 1.3;
+    word-wrap: break-word;
+}
+
+.blog-content {
+    line-height: 1.5;
+    font-size: 14px;
+    color: #e6edf3;
+    word-wrap: break-word;
+    flex: 1;
+}
+
+.blog-preview {
+    max-height: 100px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 5px;
+}
+
+.blog-preview::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.9));
+    pointer-events: none;
+}
+
+.read-more-container {
+    margin: 10px 0 5px 0;
+}
+
+.read-more-btn {
+    background: rgba(79, 138, 107, 0.3);
+    border: 1px solid rgba(79, 138, 107, 0.4);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.read-more-btn:hover {
+    background: rgba(79, 138, 107, 0.5);
+    transform: translateX(5px);
+}
+
+/* ================= METADATA ================= */
+
+.blog-meta-compact {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 8px 0 5px 0;
+    font-size: 12px;
+}
+
+.mood-tag, .reading-time, .author-tag {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+/* ================= REACTIONS ================= */
+
+.reactions-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(27, 36, 48, 0.5);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    padding: 8px 12px;
+    border-radius: 30px;
+    margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.reactions-box a,
+.reactions-box span,
+.reaction-btn {
+    text-decoration: none;
+    cursor: pointer;
+    color: #c9d1d9;
+    font-weight: 500;
+    transition: 0.2s;
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 16px;
+    white-space: nowrap;
+}
+
+.reactions-box a:hover,
+.reactions-box span:hover,
+.reaction-btn:hover {
+    transform: scale(1.1);
+    color: #4f8a6b;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Delete button */
+.delete-btn {
+    color: #ff6b6b !important;
+}
+
+.delete-btn:hover {
+    background: rgba(255, 107, 107, 0.2) !important;
+}
+
+/* Share Dropdown Styles */
+.share-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.share-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.share-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.share-options {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 5px;
+    min-width: 110px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    margin-bottom: 8px;
+}
+
+.share-options a, .share-options button {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: white;
+    border: none;
+    background: none;
+    text-align: left;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.share-options a:hover, .share-options button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateX(3px);
+}
+
+.share-wa:hover { background: #25D366 !important; }
+.share-twitter:hover { background: #1DA1F2 !important; }
+.share-fb:hover { background: #4267B2 !important; }
+.share-copy:hover { background: #6c757d !important; }
+
+/* ================= COMMENTS ================= */
+
+.comment-box {
+    display: none;
+    margin-top: 15px;
+    background: rgba(20, 28, 38, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.comment-box textarea {
+    width: 100%;
+    height: 60px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 8px;
+    margin-top: 10px;
+    background: rgba(15, 23, 32, 0.7);
+    color: #e6edf3;
+    box-sizing: border-box;
+}
+
+.comment-list {
+    margin-bottom: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.comment-list p {
+    background: rgba(27, 36, 48, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 13px;
+}
+
+.single-comment {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.single-comment small {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 11px;
+}
+
+/* ================= FORMS ================= */
+
+form {
+    margin-top: 20px;
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: 14px;
+    background: rgba(20, 28, 38, 0.6);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    color: #e6edf3;
+    transition: 0.2s;
+    box-sizing: border-box;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #4f8a6b;
+    background: rgba(20, 28, 38, 0.8);
+}
+
+textarea {
+    height: 150px;
+    resize: none;
+}
+
+/* ================= ANONYMOUS ================= */
+
+.anon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.anon input {
+    width: auto;
+}
+
+/* ================= BUTTON ================= */
+
+button {
+    background: rgba(79, 138, 107, 0.8);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    color: white;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: rgba(61, 111, 85, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ================= MOOD FILTER ================= */
+
+.mood-filter {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    background: rgba(20, 28, 38, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.mood-filter a {
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(79, 138, 107, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: white;
+    transition: 0.2s;
+}
+
+.mood-filter a:hover {
+    transform: scale(1.05);
+    background: rgba(79, 138, 107, 0.9);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* ================= MODAL STYLES ================= */
+
+.modal-body p {
+    margin-bottom: 15px;
+    line-height: 1.7;
+}
+
+.modal-body br {
+    display: block;
+    margin: 5px 0;
+}
+
+.modal-body img {
+    max-width: 100%;
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    margin: 10px auto;
+    display: block;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 768px) {
+    body {
+        padding-top: 120px;
+    }
+    
+    .mood-bar {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px;
+    }
+    
+    .mood-btn {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+    
+    .container {
+        width: 95%;
+        padding: 20px;
+    }
+    
+    .hero-text h1 {
+        font-size: 40px;
+    }
+    
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px;
+    }
+    
+    .nav {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .nav a, .nav button {
+        font-size: 14px;
+        padding: 6px 10px;
+    }
+    
+    .blog-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .blog {
+        min-height: 450px;
+        padding: 15px;
+    }
+    
+    .reactions-box {
+        gap: 5px;
+        padding: 6px 8px;
+    }
+    
+    .reactions-box a,
+    .reactions-box span,
+    .reaction-btn {
+        font-size: 12px;
+        padding: 3px 6px;
+    }
+}
+
+/* No blogs message */
+.no-blogs {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+}
+
+/* Drafts link */
+.drafts-link {
+    background: rgba(255, 193, 7, 0.2);
+    padding: 5px 12px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.drafts-link:hover {
+    background: rgba(255, 193, 7, 0.4);
+    transform: translateY(-2px);
+}
+
+/* PDF button */
+.pdf-btn {
+    color: white !important;
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 16px;
+    background: rgba(231, 76, 60, 0.3);
+    transition: all 0.3s ease;
+    font-size: 13px;
+}
+
+.pdf-btn:hover {
+    background: rgba(231, 76, 60, 0.6);
+    transform: scale(1.05);
+}

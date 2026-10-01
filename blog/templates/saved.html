@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Saved Blogs</title>
+<link rel="stylesheet" href="/static/main.css">
+</head>
+
+<body>
+
+{% extends "base.html" %}
+
+{% block title %}Saved Blogs{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="topbar">
+        <h1>Your Saved Blogs</h1>
+        <div class="nav">
+            <a href="/">⬅ Back to Home</a>
+        </div>
+    </div>
+
+    <hr>
+
+    {% if blogs %}
+        <div class="blog-grid">
+        {% for blog in blogs %}
+            <div class="blog" id="blog-{{blog.id}}">
+                <!-- AUDIO PLAYER -->
+                {% if blog.audio_file %}
+                <audio controls style="width: 100%; margin-bottom: 15px;">
+                    <source src="{{ blog.audio_file.url }}" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+                {% endif %}
+
+                <!-- SPOTIFY EMBED -->
+                {% if blog.spotify_link %}
+                <iframe style="border-radius:12px; margin-bottom: 15px;"
+                    src="https://open.spotify.com/embed/track/{{ blog.spotify_link|cut:'https://open.spotify.com/track/' }}"
+                    width="100%" height="80" frameBorder="0"
+                    allowfullscreen=""
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
+                </iframe>
+                {% endif %}
+
+                <!-- COVER IMAGE -->
+                {% if blog.cover_image %}
+                <img src="{{ blog.cover_image.url }}" class="blog-cover" alt="{{ blog.title }}">
+                {% endif %}
+
+                <h2 class="blog-title">{{ blog.title }}</h2>
+                
+                <p>{{ blog.content|truncatewords:50 }}</p>
+                
+                <div class="blog-divider"></div>
+                
+                <p><b>Mood:</b> {{ blog.mood }}</p>
+                <p><b>Reading time:</b> {{ blog.reading_time }} min</p>
+                
+                <p><b>Author:</b> 
+                    {% if blog.anonymous %}
+                        Anonymous
+                    {% else %}
+                        {{ blog.author }}
+                    {% endif %}
+                </p>
+
+                <!-- REACTION BUTTONS -->
+                <div class="reactions-box">
+                    <a href="/react/{{blog.id}}/like/#blog-{{blog.id}}">👍 {{blog.thumbs_up}}</a>
+                    <a href="/react/{{blog.id}}/dislike/#blog-{{blog.id}}">👎 {{blog.thumbs_down}}</a>
+                    <a href="/react/{{blog.id}}/heart/#blog-{{blog.id}}">❤️ {{blog.heart}}</a>
+                    <a href="{% url 'unsave_blog' blog.id %}" class="save-btn" style="color: #ff6b6b;">🗑️ Remove</a>
+                    <span class="comment-btn" onclick="toggleComments({{blog.id}})">💬 {{ blog.comment_set.count }}</span>
+                </div>
+
+                <!-- COMMENTS SECTION -->
+                <div id="comments-{{blog.id}}" class="comment-box" style="display:none;">
+                    <div class="comment-list">
+                        {% for comment in blog.comment_set.all %}
+                            <p>{{ comment.text }}</p>
+                        {% empty %}
+                            <p>No comments yet</p>
+                        {% endfor %}
+                    </div>
+                    <form method="POST" action="/comment/{{blog.id}}/#blog-{{blog.id}}">
+                        {% csrf_token %}
+                        <textarea name="text" placeholder="Write a comment..." required></textarea>
+                        <br>
+                        <button type="submit">Post Comment</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    {% else %}
+        <div class="glass-card" style="text-align: center; padding: 40px;">
+            <h3>You haven't saved any blogs yet.</h3>
+            <p>Browse blogs and click the 🔖 button to save them!</p>
+            <a href="/" class="hero-btn" style="display: inline-block; margin-top: 20px;">Browse Blogs</a>
+            <!-- REMOVED THE UNSAVE BUTTON FROM HERE -->
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleComments(id){
+    let box = document.getElementById("comments-" + id);
+    if(box.style.display === "block"){
+        box.style.display = "none";
+    } else {
+        box.style.display = "block";
+    }
+}
+</script>
+{% endblock %}</html>

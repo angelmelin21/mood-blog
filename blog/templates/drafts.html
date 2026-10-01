@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}My Drafts{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="topbar">
+        <h2>My Drafts</h2>
+        <div class="nav">
+            <a href="/">⬅ Back to Home</a>
+            <a href="{% url 'create' %}">✏️ New Blog</a>
+        </div>
+    </div>
+
+    {% if drafts %}
+        <div class="blog-grid">
+        {% for draft in drafts %}
+            <div class="blog draft-blog">
+                <h2 class="blog-title">{{ draft.title|default:"Untitled Draft" }}</h2>
+                
+                <p>{{ draft.content|striptags|truncatewords:30 }}</p>
+                
+                <div class="blog-divider"></div>
+                
+                <p><b>Mood:</b> {{ draft.mood }}</p>
+                <p><b>Last saved:</b> {{ draft.last_saved|timesince }} ago</p>
+                
+                <div class="reactions-box">
+                    <a href="{% url 'create' %}?draft={{ draft.id }}" class="edit-btn">✏️ Continue Editing</a>
+                    <a href="{% url 'publish_draft' draft.id %}" class="publish-btn">📤 Publish Now</a>
+                    <button onclick="deleteDraft({{ draft.id }})" class="delete-btn">🗑️ Delete</button>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    {% else %}
+        <div class="glass-card" style="text-align: center; padding: 50px;">
+            <h3>No drafts yet</h3>
+            <p>Start writing a blog and save it as draft!</p>
+            <a href="{% url 'create' %}" class="hero-btn" style="display: inline-block; margin-top: 20px;">Start Writing</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+        margin-top: 20px;
+    }
+    
+    .draft-blog {
+        border-left: 4px solid #FFC107 !important;
+        height: fit-content;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .edit-btn {
+        color: #FFC107 !important;
+        text-decoration: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+    
+    .publish-btn {
+        color: #4CAF50 !important;
+        text-decoration: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+    
+    .delete-btn {
+        color: #f44336 !important;
+        background: none !important;
+        border: none !important;
+        padding: 5px 10px !important;
+        font-size: 14px !important;
+        cursor: pointer !important;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+    
+    .edit-btn:hover, .publish-btn:hover, .delete-btn:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        transform: scale(1.05);
+    }
+    
+    .reactions-box {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 15px;
+        justify-content: center;
+    }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+    }
+</style>
+
+<script>
+    function deleteDraft(draftId) {
+        if (confirm('Are you sure you want to delete this draft? This action cannot be undone.')) {
+            console.log('Deleting draft:', draftId);
+            
+            fetch(`/delete-draft/${draftId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    alert('Draft deleted successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting draft. Check console for details.');
+            });
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mood Blog - {% block title %}{% endblock %}</title>
+<link rel="stylesheet" href="/static/main.css">
+<style>
+    /* Mood Bar Styles */
+    .mood-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 2px solid;
+        z-index: 1000;
+        animation: slideDown 0.5s ease-out;
+    }
+
+    .mood-btn {
+        padding: 12px 28px;
+        border: none;
+        border-radius: 40px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .mood-btn:hover {
+        transform: translateY(-3px);
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    body {
+        padding-top: 85px;
+        transition: background 0.5s ease, color 0.3s ease;
+        min-height: 100vh;
+        margin: 0;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    /* ===== MOOD THEMES - APPLIED TO BODY ===== */
+    
+    /* Theme 1: Midnight Blue */
+    body.mood-theme1 {
+        background: linear-gradient(135deg, #0B1E33, #1A2F4A, #2A3F5A);
+        color: #E0F2FE;
+    }
+    
+    body.mood-theme1 .mood-bar {
+        background: rgba(11, 30, 51, 0.5);
+        border-bottom-color: #5F9EA0;
+    }
+    
+    body.mood-theme1 .container {
+        background: rgba(26, 47, 74, 0.4);
+        border: 2px solid #5F9EA0;
+    }
+    
+    body.mood-theme1 .blog {
+        background: rgba(42, 63, 90, 0.4);
+        border: 1px solid #5F9EA0;
+    }
+    
+    body.mood-theme1 .reactions-box {
+        background: rgba(11, 30, 51, 0.5);
+        border: 1px solid #5F9EA0;
+    }
+    
+    body.mood-theme1 .nav a, 
+    body.mood-theme1 .nav button,
+    body.mood-theme1 h1, 
+    body.mood-theme1 h2, 
+    body.mood-theme1 h3,
+    body.mood-theme1 p, 
+    body.mood-theme1 span {
+        color: #E0F2FE !important;
+    }
+
+    /* Theme 2: Burgundy Wine */
+    body.mood-theme2 {
+        background: linear-gradient(135deg, #2D1A2B, #4A2438, #6B2E45);
+        color: #FFE4F2;
+    }
+    
+    body.mood-theme2 .mood-bar {
+        background: rgba(45, 26, 43, 0.5);
+        border-bottom-color: #FF9FCF;
+    }
+    
+    body.mood-theme2 .container {
+        background: rgba(74, 36, 56, 0.4);
+        border: 2px solid #FF9FCF;
+    }
+    
+    body.mood-theme2 .blog {
+        background: rgba(107, 46, 69, 0.4);
+        border: 1px solid #FF9FCF;
+    }
+    
+    body.mood-theme2 .reactions-box {
+        background: rgba(45, 26, 43, 0.5);
+        border: 1px solid #FF9FCF;
+    }
+    
+    body.mood-theme2 .nav a, 
+    body.mood-theme2 .nav button,
+    body.mood-theme2 h1, 
+    body.mood-theme2 h2, 
+    body.mood-theme2 h3,
+    body.mood-theme2 p, 
+    body.mood-theme2 span {
+        color: #FFE4F2 !important;
+    }
+
+    /* Theme 3: Forest Green */
+    body.mood-theme3 {
+        background: linear-gradient(135deg, #1A2F1F, #2A452A, #3D5A3A);
+        color: #E2F0D6;
+    }
+    
+    body.mood-theme3 .mood-bar {
+        background: rgba(26, 47, 31, 0.5);
+        border-bottom-color: #A5D6A5;
+    }
+    
+    body.mood-theme3 .container {
+        background: rgba(42, 69, 42, 0.4);
+        border: 2px solid #A5D6A5;
+    }
+    
+    body.mood-theme3 .blog {
+        background: rgba(61, 90, 58, 0.4);
+        border: 1px solid #A5D6A5;
+    }
+    
+    body.mood-theme3 .reactions-box {
+        background: rgba(26, 47, 31, 0.5);
+        border: 1px solid #A5D6A5;
+    }
+    
+    body.mood-theme3 .nav a, 
+    body.mood-theme3 .nav button,
+    body.mood-theme3 h1, 
+    body.mood-theme3 h2, 
+    body.mood-theme3 h3,
+    body.mood-theme3 p, 
+    body.mood-theme3 span {
+        color: #E2F0D6 !important;
+    }
+
+    /* Theme 4: Purple Haze */
+    body.mood-theme4 {
+        background: linear-gradient(135deg, #261A2F, #382A45, #4F3A5A);
+        color: #F0E2FF;
+    }
+    
+    body.mood-theme4 .mood-bar {
+        background: rgba(38, 26, 47, 0.5);
+        border-bottom-color: #C49FFF;
+    }
+    
+    body.mood-theme4 .container {
+        background: rgba(56, 42, 69, 0.4);
+        border: 2px solid #C49FFF;
+    }
+    
+    body.mood-theme4 .blog {
+        background: rgba(79, 58, 90, 0.4);
+        border: 1px solid #C49FFF;
+    }
+    
+    body.mood-theme4 .reactions-box {
+        background: rgba(38, 26, 47, 0.5);
+        border: 1px solid #C49FFF;
+    }
+    
+    body.mood-theme4 .nav a, 
+    body.mood-theme4 .nav button,
+    body.mood-theme4 h1, 
+    body.mood-theme4 h2, 
+    body.mood-theme4 h3,
+    body.mood-theme4 p, 
+    body.mood-theme4 span {
+        color: #F0E2FF !important;
+    }
+
+    /* General Container styling - these apply to all themes */
+    .container {
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 18px;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+        padding: 30px;
+        margin: 30px auto;
+        width: 92%;
+        max-width: 1400px;
+    }
+
+    /* FIXED NAVBAR STYLES */
+    .topbar {
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 15px 25px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(0, 0, 0, 0.2);
+        min-height: 70px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .nav {
+        display: flex;
+        align-items: center;
+        gap: 25px;
+        flex-wrap: wrap;
+        padding: 5px 0;
+    }
+
+    .nav a, .nav button, .nav form {
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+    }
+
+    .nav a, .nav button {
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        padding: 8px 12px;
+        line-height: 1.4;
+        border-radius: 6px;
+    }
+
+    .nav a:hover, .nav button:hover {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+    
+    .nav a::after, .nav button::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background: currentColor;
+        transition: all 0.3s ease;
+        transform: translateX(-50%);
+    }
+
+    .nav a:hover::after, .nav button:hover::after {
+        width: 80%;
+    }
+
+    .topbar h2 {
+        margin: 0;
+        padding: 5px 0;
+        line-height: 1.4;
+        font-size: 1.5rem;
+    }
+
+    /* Drafts link style */
+    .drafts-link {
+        background: rgba(255, 193, 7, 0.2);
+        padding: 5px 12px;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        font-size: 14px;
+    }
+
+    .drafts-link:hover {
+        background: rgba(255, 193, 7, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .blog {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 14px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        padding: 18px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .blog:hover {
+        transform: translateY(-5px) scale(1.02);
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .reactions-box {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 20px;
+        padding: 8px 15px;
+        display: inline-flex;
+        gap: 15px;
+        margin-top: 10px;
+    }
+
+    .reactions-box a, .reactions-box span, .reactions-box button {
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .reactions-box a:hover, .reactions-box span:hover, .reactions-box button:hover {
+        transform: scale(1.15);
+    }
+
+    .mood-filter {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 12px;
+        border-radius: 10px;
+        margin-top: 10px;
+        margin-bottom: 20px;
+    }
+
+    .mood-filter a {
+        text-decoration: none;
+        padding: 8px 18px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: 0.2s;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    .hero {
+        position: relative;
+    }
+    
+    .hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        border-radius: 14px;
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    .hero-btn {
+        padding: 12px 25px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: 0.25s;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    input, textarea, select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        font-size: 14px;
+        margin-bottom: 15px;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    input::placeholder, textarea::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    button {
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    button:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .blog-divider {
+        margin: 12px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .comment-box {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 12px;
+        padding: 15px;
+        margin-top: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    /* Share button styles */
+    .share-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .share-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .share-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .share-options {
+        position: absolute;
+        bottom: 100%;
+        right: 0;
+        background: rgba(30, 30, 30, 0.95);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 8px;
+        min-width: 120px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        z-index: 100;
+        margin-bottom: 5px;
+    }
+
+    .share-options a, .share-options button {
+        display: block;
+        width: 100%;
+        padding: 8px 12px;
+        text-decoration: none;
+        color: white;
+        border: none;
+        background: none;
+        text-align: left;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+
+    .share-options a:hover, .share-options button:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateX(5px);
+    }
+
+    .share-wa:hover { background: #25D366 !important; }
+    .share-twitter:hover { background: #1DA1F2 !important; }
+    .share-fb:hover { background: #4267B2 !important; }
+    .share-copy:hover { background: #6c757d !important; }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideDown {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+    }
+
+    /* ===== LOADING ANIMATION ===== */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .loading-overlay.show {
+        display: flex;
+        opacity: 1;
+    }
+
+    .loading-spinner {
+        width: 60px;
+        height: 60px;
+        position: relative;
+    }
+
+    .spinner-ring {
+        width: 100%;
+        height: 100%;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .spinner-ring::after {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        border: 4px solid transparent;
+        border-top-color: #e74c3c;
+        border-radius: 50%;
+        animation: spin 1.5s linear infinite;
+    }
+
+    .loading-text {
+        margin-top: 20px;
+        color: white;
+        font-size: 18px;
+        font-weight: 500;
+        text-align: center;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .mood-bar {
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px;
+        }
+        
+        .mood-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        body {
+            padding-top: 120px;
+        }
+
+        .topbar {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 15px;
+        }
+        
+        .nav {
+            width: 100%;
+            justify-content: flex-start;
+            gap: 12px;
+        }
+        
+        .nav a, .nav button {
+            font-size: 14px;
+            padding: 6px 10px;
+        }
+    }
+</style>
+</head>
+<body class="mood-theme1">
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div style="text-align: center;">
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+            </div>
+            <div class="loading-text" id="loadingText">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Mood Color Bar -->
+    <div class="mood-bar">
+        <button class="mood-btn" data-mood="theme1">🌊 Midnight Blue</button>
+        <button class="mood-btn" data-mood="theme2">🍷 Burgundy Wine</button>
+        <button class="mood-btn" data-mood="theme3">🌲 Forest Green</button>
+        <button class="mood-btn" data-mood="theme4">🔮 Purple Haze</button>
+    </div>
+
+    <!-- Main Content Block -->
+    {% block content %}
+    {% endblock %}
+
+    <script>
+        // Function to apply theme
+        function applyTheme(theme) {
+            document.body.className = `mood-${theme}`;
+            localStorage.setItem('selectedMood', theme);
+        }
+
+        // Load saved theme on every page
+        (function() {
+            const savedMood = localStorage.getItem('selectedMood');
+            if (savedMood) {
+                document.body.className = `mood-${savedMood}`;
+            }
+        })();
+
+        // Add click handlers to mood buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const moodBtns = document.querySelectorAll('.mood-btn');
+            
+            moodBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const mood = this.dataset.mood;
+                    applyTheme(mood);
+                });
+            });
+        });
+
+        // Your existing toggleComments function
+        function toggleComments(id){
+            let box = document.getElementById("comments-" + id);
+            if(box.style.display === "block"){
+                box.style.display = "none";
+            } else {
+                box.style.display = "block";
+            }
+        }
+
+        // Toggle share dropdown
+        function toggleShare(blogId) {
+            const shareBox = document.getElementById('share-' + blogId);
+            if (shareBox.style.display === 'block') {
+                shareBox.style.display = 'none';
+            } else {
+                shareBox.style.display = 'block';
+            }
+        }
+
+        // Copy link function
+        function copyLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copied to clipboard!');
+            }).catch(() => {
+                alert('Failed to copy link');
+            });
+        }
+
+        // Close share dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.classList.contains('share-btn') && !event.target.closest('.share-options')) {
+                document.querySelectorAll('.share-options').forEach(box => {
+                    box.style.display = 'none';
+                });
+            }
+        });
+
+        // Show loading overlay
+        function showLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.classList.add('show');
+            }
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+        }
+
+        // Hide loading when page is loaded
+        window.addEventListener('load', function() {
+            hideLoading();
+        });
+    </script>
+</body>
+</html>
